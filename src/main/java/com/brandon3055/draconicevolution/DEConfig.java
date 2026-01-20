@@ -63,6 +63,15 @@ public class DEConfig {
     public static double reactorFuelUsageMultiplier = 5;
     public static double reactorExplosionScale = 1;
     public static boolean disableLargeReactorBoom = false;
+    public static boolean reactorExplosionDestroyBlocks = true;
+    public static boolean reactorExplosionSpawnLava = true;
+    public static boolean reactorExplosionEffect = true;
+    public static boolean reactorExplosionDamage = true;
+    public static int reactorExplosionCountdown = 60;
+    public static boolean reactorMinimalBoom = true;
+    public static boolean reactorComponentExplosion = true;
+
+    public static boolean portalCrossDimensionMobTeleport = false;
 
     public static int grinderEnergyPerHeart;
     public static Set<String> grinderBlackList;
@@ -274,6 +283,12 @@ public class DEConfig {
                 .setDefaultInt(256)
                 .onSync((tag, type) -> portalMaxDistanceSq = tag.getInt() * tag.getInt());
 
+        serverTag.getValue("portalCrossDimensionMobTeleport")
+                .syncTagToClient()
+                .setComment("If false, non-player entities will not be able to teleport through portals to different dimensions.")
+                .setDefaultBoolean(false)
+                .onSync((tag, type) -> portalCrossDimensionMobTeleport = tag.getBoolean());
+
         {
             ConfigCategory reactor = serverTag.getCategory("Reactor");
             reactor.setComment("These are all (server side) config fields related to the reactor");
@@ -298,6 +313,41 @@ public class DEConfig {
                     .setComment("If true, this will disable the massive reactor explosion and replace it with a much smaller one.")
                     .setDefaultBoolean(false)
                     .onSync((tag, type) -> disableLargeReactorBoom = tag.getBoolean());
+            reactor.getValue("reactorExplosionDestroyBlocks")
+                    .syncTagToClient()
+                    .setComment("If false, reactor explosion will not destroy blocks.")
+                    .setDefaultBoolean(true)
+                    .onSync((tag, type) -> reactorExplosionDestroyBlocks = tag.getBoolean());
+            reactor.getValue("reactorExplosionSpawnLava")
+                    .syncTagToClient()
+                    .setComment("If false, reactor explosion will not spawn lava.")
+                    .setDefaultBoolean(true)
+                    .onSync((tag, type) -> reactorExplosionSpawnLava = tag.getBoolean());
+            reactor.getValue("reactorExplosionEffect")
+                    .syncTagToClient()
+                    .setComment("If false, reactor explosion visual effect will be disabled.")
+                    .setDefaultBoolean(true)
+                    .onSync((tag, type) -> reactorExplosionEffect = tag.getBoolean());
+            reactor.getValue("reactorExplosionDamage")
+                    .syncTagToClient()
+                    .setComment("If false, reactor explosion will not damage entities.")
+                    .setDefaultBoolean(true)
+                    .onSync((tag, type) -> reactorExplosionDamage = tag.getBoolean());
+            reactor.getValue("reactorExplosionCountdown")
+                    .syncTagToClient()
+                    .setComment("Time in seconds before reactor explodes after meltdown. Default: 60")
+                    .setDefaultInt(60)
+                    .onSync((tag, type) -> reactorExplosionCountdown = tag.getInt());
+            reactor.getValue("reactorMinimalBoom")
+                    .syncTagToClient()
+                    .setComment("If false, the minimal explosion (when disableLargeReactorBoom is true) will be disabled completely.")
+                    .setDefaultBoolean(true)
+                    .onSync((tag, type) -> reactorMinimalBoom = tag.getBoolean());
+            reactor.getValue("reactorComponentExplosion")
+                    .syncTagToClient()
+                    .setComment("If false, reactor components will not explode during meltdown, blocks will just be removed.")
+                    .setDefaultBoolean(true)
+                    .onSync((tag, type) -> reactorComponentExplosion = tag.getBoolean());
         }
 
         serverTag.getValue("dragonDustLootModifier")

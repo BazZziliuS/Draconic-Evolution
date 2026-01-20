@@ -4,6 +4,8 @@ import com.brandon3055.brandonscore.blocks.EntityBlockBCore;
 import com.brandon3055.brandonscore.blocks.TileBCore;
 import com.brandon3055.brandonscore.lib.CustomTabHandling;
 import com.brandon3055.brandonscore.utils.FacingUtils;
+import com.brandon3055.brandonscore.utils.TargetPos;
+import com.brandon3055.draconicevolution.DEConfig;
 import com.brandon3055.draconicevolution.blocks.tileentity.TileDislocatorReceptacle;
 import com.brandon3055.draconicevolution.blocks.tileentity.TilePortal;
 import com.brandon3055.draconicevolution.init.DEContent;
@@ -12,6 +14,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -122,6 +125,12 @@ public class Portal extends EntityBlockBCore implements CustomTabHandling {
     public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
         BlockEntity tile = world.getBlockEntity(pos);
         if (tile instanceof TilePortal && ((TilePortal) tile).getController() != null) {
+            TileDislocatorReceptacle controller = ((TilePortal) tile).getController();
+            TargetPos target = controller.getTargetPos();
+            if (target == null) return;
+            if (!DEConfig.portalCrossDimensionMobTeleport && (target.dimension() != entity.level().dimension()) && !(entity instanceof Player)) {
+                return;
+            }
             ((TilePortal) tile).getController().handleEntityTeleport(entity);
         }
     }

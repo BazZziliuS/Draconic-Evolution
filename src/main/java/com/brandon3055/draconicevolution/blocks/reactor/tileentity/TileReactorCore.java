@@ -406,7 +406,11 @@ public class TileReactorCore extends TileBCore implements MenuProvider {
                 ManagedVec3I v = componentPositions[i];
                 if (v.get().sum() > 0) {
                     BlockPos p = getOffsetPos(v.get()).relative(Direction.from3DDataValue(i).getOpposite());
-                    level.explode((Entity) null, p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 4, true, Level.ExplosionInteraction.BLOCK);
+                    if (DEConfig.reactorComponentExplosion) {
+                        level.explode((Entity) null, p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 4, true, Level.ExplosionInteraction.BLOCK);
+                    } else {
+                        level.removeBlock(p, true);
+                    }
                 }
             }
         }
@@ -452,7 +456,7 @@ public class TileReactorCore extends TileBCore implements MenuProvider {
         LogHelper.dev(explosionCountdown.get() / 20);
 
         if (explosionCountdown.get() == -1) {
-            explosionCountdown.set((60 * 20) + Math.max(0, minExplosionDelay));
+            explosionCountdown.set((DEConfig.reactorExplosionCountdown * 20) + Math.max(0, minExplosionDelay));
         }
 
         if (explosionCountdown.dec() <= 0) {
@@ -897,6 +901,11 @@ public class TileReactorCore extends TileBCore implements MenuProvider {
     //endregion
 
     private void minimalBoom() {
+        if (!DEConfig.reactorMinimalBoom) {
+            level.removeBlock(worldPosition, false);
+            return;
+        }
+
         BlockState lava = Blocks.LAVA.defaultBlockState();
         //TODO pyrotheum
 //        LogHelper.dev(FluidRegistry.isFluidRegistered("pyrotheum"));

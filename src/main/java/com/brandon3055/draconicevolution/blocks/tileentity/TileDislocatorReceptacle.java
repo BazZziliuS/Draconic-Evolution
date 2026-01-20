@@ -314,7 +314,7 @@ public class TileDislocatorReceptacle extends TileBCore implements IInteractTile
         }
     }
 
-    private TargetPos getTargetPos() {
+    public TargetPos getTargetPos() {
         ItemStack stack = itemHandler.getStackInSlot(0);
         if (!(stack.getItem() instanceof Dislocator)) return null;
         return ((Dislocator) stack.getItem()).getTargetPos(stack, level);

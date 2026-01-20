@@ -8,6 +8,7 @@ import com.brandon3055.brandonscore.lib.Vec3D;
 import com.brandon3055.brandonscore.utils.MathUtils;
 import com.brandon3055.brandonscore.utils.SimplexNoise;
 import com.brandon3055.brandonscore.utils.Utils;
+import com.brandon3055.draconicevolution.DEConfig;
 import com.brandon3055.draconicevolution.init.DEDamage;
 import com.brandon3055.draconicevolution.lib.ExplosionHelper;
 import com.brandon3055.draconicevolution.network.DraconicNetwork;
@@ -341,51 +342,57 @@ public class ProcessExplosion implements IProcess {
 
         long l = System.currentTimeMillis();
 
-        LogHelper.dev("Removing Blocks!");
-        LogHelper.startTimer("Adding Blocks For Removal");
+        if (DEConfig.reactorExplosionDestroyBlocks) {
+            LogHelper.dev("Removing Blocks!");
+            LogHelper.startTimer("Adding Blocks For Removal");
 
-        ExplosionHelper removalHelper = new ExplosionHelper(level, origin.pos());
-        int blocksRemoved = 0;
+            ExplosionHelper removalHelper = new ExplosionHelper(level, origin.pos());
+            int blocksRemoved = 0;
 
-        removalHelper.setBlocksForRemoval(destroyedBlocks);
+            removalHelper.setBlocksForRemoval(destroyedBlocks);
 
-        LogHelper.stopTimer();
+            LogHelper.stopTimer();
 
-        LogHelper.startTimer("Adding update Blocks");
-        removalHelper.addBlocksForUpdate(blocksToUpdate);
-        LogHelper.dev("Blocks Removed: " + blocksRemoved);
-        LogHelper.stopTimer();
+            LogHelper.startTimer("Adding update Blocks");
+            removalHelper.addBlocksForUpdate(blocksToUpdate);
+            LogHelper.dev("Blocks Removed: " + blocksRemoved);
+            LogHelper.stopTimer();
 
-        LogHelper.startTimer("Adding Lava");
-        for (Long pos : lavaPositions) {
-            level.setBlockAndUpdate(mPos.set(pos), lavaState);
+            if (DEConfig.reactorExplosionSpawnLava) {
+                LogHelper.startTimer("Adding Lava");
+                for (Long pos : lavaPositions) {
+                    level.setBlockAndUpdate(mPos.set(pos), lavaState);
+                }
+                LogHelper.stopTimer();
+            }
+
+            removalHelper.finish();
         }
-        LogHelper.stopTimer();
-
-        removalHelper.finish();
 
         isDead = true;
         detonated = true;
 
         final BlockPos pos = origin.pos();
-        if (enableEffect) {
+        if (DEConfig.reactorExplosionEffect && enableEffect) {
             DraconicNetwork.sendExplosionEffect(level.registryAccess(), level.dimension(), pos, radius * 4, true);
         }
 
-        for (int i = 0; i <= radius; i+=10) {
-        	double calcRadius = radius * (i / (double)radius);
-            new DelayedExecutor(i + 30) {
-                @Override
-                public void execute(Object[] args) {
-                    List<Entity> list = level.getEntitiesOfClass(Entity.class, new AABB(Vec3.atLowerCornerOf(pos), Vec3.atLowerCornerOf(pos.offset(1, 1, 1))).inflate(calcRadius * 2.5, calcRadius * 2.5, calcRadius * 2.5));
-                    for (Entity e : list) {
-                        double dist = Vec3D.getCenter(pos).distance(e);
-                        float dmg = (1000) * (1F - (float) (dist / (calcRadius * 1.2D)));
-                        if (dmg <= 0) continue;
-                        e.hurt(DEDamage.fusionDamage(level), dmg);
+        if (DEConfig.reactorExplosionDamage) {
+            for (int i = 0; i <= radius; i += 10) {
+                double calcRadius = radius * (i / (double) radius);
+                new DelayedExecutor(i + 30) {
+                    @Override
+                    public void execute(Object[] args) {
+                        List<Entity> list = level.getEntitiesOfClass(Entity.class, new AABB(Vec3.atLowerCornerOf(pos), Vec3.atLowerCornerOf(pos.offset(1, 1, 1))).inflate(calcRadius * 2.5, calcRadius * 2.5, calcRadius * 2.5));
+                        for (Entity e : list) {
+                            double dist = Vec3D.getCenter(pos).distance(e);
+                            float dmg = (1000) * (1F - (float) (dist / (calcRadius * 1.2D)));
+                            if (dmg <= 0) continue;
+                            e.hurt(DEDamage.fusionDamage(level), dmg);
+                        }
                     }
-                }
-            }.run();
+                }.run();
+            }
         }
 
         LogHelper.dev("Total explosion time: " + (System.currentTimeMillis() - l) / 1000D + "s");
